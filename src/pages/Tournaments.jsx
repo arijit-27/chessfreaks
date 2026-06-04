@@ -55,21 +55,21 @@ export default function Tournaments() {
   const [editError, setEditError] = useState('');
 
   // Selected tournament details
-  const [selectedTourId, setSelectedTourId] = useState(tournaments[0]?.id || null);
-  const activeTournament = tournaments.find(t => t.id === selectedTourId) || tournaments[0] || null;
+  const [selectedTourId, setSelectedTourId] = useState(tournaments[0]?.id || tournaments[0]?._id || null);
+  const activeTournament = tournaments.find(t => (t.id === selectedTourId || t._id === selectedTourId)) || tournaments[0] || null;
 
   // Roster lists for Team A and Team B
   const teamAId = activeTournament?.teams[0];
   const teamBId = activeTournament?.teams[1];
-  const teamA = teams.find(t => t.id === teamAId);
-  const teamB = teams.find(t => t.id === teamBId);
+  const teamA = teams.find(t => (t.id === teamAId || t._id === teamAId));
+  const teamB = teams.find(t => (t.id === teamBId || t._id === teamBId));
 
-  const rosterA = teamA ? players.filter(p => p.teamId === teamA.id) : [];
-  const rosterB = teamB ? players.filter(p => p.teamId === teamB.id) : [];
+  const rosterA = teamA ? players.filter(p => (p.teamId === teamA.id || p.teamId === teamA._id)) : [];
+  const rosterB = teamB ? players.filter(p => (p.teamId === teamB.id || p.teamId === teamB._id)) : [];
 
   // Filter matches for active tournament
   const tourMatches = activeTournament
-    ? matches.filter(m => m.tournamentId === activeTournament.id)
+    ? matches.filter(m => (m.tournamentId === activeTournament.id || m.tournamentId === activeTournament._id))
     : [];
 
   // 1. Group matches by round and calculate scoreboard
@@ -176,13 +176,13 @@ export default function Tournaments() {
 
   const rankedPlayers = Object.keys(playerTournamentScores)
     .map(pId => {
-      const p = players.find(pl => pl.id === pId);
+      const p = players.find(pl => (pl.id === pId || pl._id === pId));
       return {
         id: pId,
         name: p ? p.name : 'Unknown Player',
         score: playerTournamentScores[pId],
-        teamLogo: p ? teams.find(t => t.id === p.teamId)?.logo : '♟',
-        teamName: p ? teams.find(t => t.id === p.teamId)?.name : 'Free Agent'
+        teamLogo: p ? teams.find(t => (t.id === p.teamId || t._id === p.teamId))?.logo : '♟',
+        teamName: p ? teams.find(t => (t.id === p.teamId || t._id === p.teamId))?.name : 'Free Agent'
       };
     })
     .sort((a,b) => b.score - a.score);
@@ -209,7 +209,7 @@ export default function Tournaments() {
       setTeamASelection('');
       setTeamBSelection('');
       setShowAddForm(false);
-      setSelectedTourId(created.id);
+      setSelectedTourId(created.id || created._id);
     } catch (err) {
       setError(err.message);
     }
@@ -225,7 +225,7 @@ export default function Tournaments() {
 
     try {
       await addMatch({
-        tournamentId: activeTournament.id,
+        tournamentId: activeTournament.id || activeTournament._id,
         round: Number(matchRound) || 1,
         matchNumber: Number(matchNum) || 1,
         playerAId: matchPlayerA,
@@ -248,7 +248,7 @@ export default function Tournaments() {
   };
 
   const handleOpenEdit = (m) => {
-    setEditingMatchId(m.id);
+    setEditingMatchId(m.id || m._id);
     setEditPlayerA(m.playerAId || '');
     setEditPlayerB(m.playerBId || '');
     setEditTimeControl(m.timeControl || '10+6');
@@ -585,7 +585,7 @@ export default function Tournaments() {
                 <select className="form-select" value={teamASelection} onChange={(e) => setTeamASelection(e.target.value)}>
                   <option value="">Select Team A...</option>
                   {teams.map(t => (
-                    <option key={t.id} value={t.id}>{t.logo} {t.name}</option>
+                    <option key={t.id || t._id} value={t.id || t._id}>{t.logo} {t.name}</option>
                   ))}
                 </select>
               </div>
@@ -595,7 +595,7 @@ export default function Tournaments() {
                 <select className="form-select" value={teamBSelection} onChange={(e) => setTeamBSelection(e.target.value)}>
                   <option value="">Select Team B...</option>
                   {teams.map(t => (
-                    <option key={t.id} value={t.id}>{t.logo} {t.name}</option>
+                    <option key={t.id || t._id} value={t.id || t._id}>{t.logo} {t.name}</option>
                   ))}
                 </select>
               </div>
@@ -638,12 +638,12 @@ export default function Tournaments() {
           {tournaments.length > 0 ? (
             tournaments.map(t => (
               <div
-                key={t.id}
-                className={`tour-item-btn ${selectedTourId === t.id || (!selectedTourId && activeTournament?.id === t.id) ? 'active' : ''}`}
-                onClick={() => setSelectedTourId(t.id)}
+                key={t.id || t._id}
+                className={`tour-item-btn ${selectedTourId === (t.id || t._id) || (!selectedTourId && (activeTournament?.id || activeTournament?._id) === (t.id || t._id)) ? 'active' : ''}`}
+                onClick={() => setSelectedTourId(t.id || t._id)}
               >
                 {user?.role === 'admin' && (
-                  <button className="delete-tour-btn" onClick={(e) => { e.stopPropagation(); handleDeleteTournament(t.id, t.name); }} title="Delete Tournament">
+                  <button className="delete-tour-btn" onClick={(e) => { e.stopPropagation(); handleDeleteTournament(t.id || t._id, t.name); }} title="Delete Tournament">
                     <Trash2 size={14} />
                   </button>
                 )}
@@ -769,7 +769,7 @@ export default function Tournaments() {
                           <select className="form-select" value={matchPlayerA} onChange={(e) => setMatchPlayerA(e.target.value)}>
                             <option value="">Select Player A...</option>
                             {rosterA.map(p => (
-                              <option key={p.id} value={p.id}>{p.name} ({p.elo})</option>
+                              <option key={p.id || p._id} value={p.id || p._id}>{p.name} ({p.elo})</option>
                             ))}
                           </select>
                         </div>
@@ -778,7 +778,7 @@ export default function Tournaments() {
                           <select className="form-select" value={matchPlayerB} onChange={(e) => setMatchPlayerB(e.target.value)}>
                             <option value="">Select Player B...</option>
                             {rosterB.map(p => (
-                              <option key={p.id} value={p.id}>{p.name} ({p.elo})</option>
+                              <option key={p.id || p._id} value={p.id || p._id}>{p.name} ({p.elo})</option>
                             ))}
                           </select>
                         </div>

@@ -221,7 +221,7 @@ export const AppProvider = ({ children }) => {
     });
     const updated = await res.json();
     if (!res.ok) throw new Error(updated.error || "Failed to update player");
-    setPlayers(prev => prev.map(p => p.id === id ? updated : p));
+    setPlayers(prev => prev.map(p => (p.id === id || p._id === id) ? updated : p));
     return updated;
   };
 
@@ -234,7 +234,7 @@ export const AppProvider = ({ children }) => {
       const data = await res.json();
       throw new Error(data.error || "Failed to delete player");
     }
-    setPlayers(prev => prev.filter(p => p.id !== id));
+    setPlayers(prev => prev.filter(p => (p.id !== id && p._id !== id)));
   };
 
   // Team Operations
@@ -259,7 +259,7 @@ export const AppProvider = ({ children }) => {
       const data = await res.json();
       throw new Error(data.error || "Failed to delete team");
     }
-    setTeams(prev => prev.filter(t => t.id !== id));
+    setTeams(prev => prev.filter(t => (t.id !== id && t._id !== id)));
     // Refresh players list as their team assignments were cleared by db.js
     fetch('/api/players').then(res => res.json()).then(setPlayers);
   };
@@ -288,7 +288,7 @@ export const AppProvider = ({ children }) => {
       const data = await res.json();
       throw new Error(data.error || "Failed to delete tournament");
     }
-    setTournaments(prev => prev.filter(t => t.id !== id));
+    setTournaments(prev => prev.filter(t => (t.id !== id && t._id !== id)));
     // Reload matches as they are cascade deleted
     fetch('/api/matches').then(res => res.json()).then(setMatches);
   };
@@ -368,11 +368,11 @@ export const AppProvider = ({ children }) => {
   useEffect(() => {
     const achievements = {};
     players.forEach(p => {
-      achievements[p.id] = { mvps: 0, gold: 0, silver: 0, bronze: 0 };
+      achievements[p.id || p._id] = { mvps: 0, gold: 0, silver: 0, bronze: 0 };
     });
 
     tournaments.forEach(tour => {
-      const tourMatches = matches.filter(m => m.tournamentId === tour.id && m.isCompleted);
+      const tourMatches = matches.filter(m => m.tournamentId === (tour.id || tour._id) && m.isCompleted);
       if (tourMatches.length === 0) return;
 
       const playerScores = {};

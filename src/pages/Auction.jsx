@@ -27,7 +27,7 @@ export default function Auction() {
 
   // Find bidder team name
   const currentBidderTeam = activeAuctionData
-    ? teams.find(t => t.id === activeAuctionData.currentBidderTeamId)
+    ? teams.find(t => (t.id === activeAuctionData.currentBidderTeamId || t._id === activeAuctionData.currentBidderTeamId))
     : null;
 
   const handleStartAuction = async (playerId) => {
@@ -50,7 +50,7 @@ export default function Auction() {
     if (isNaN(amount) || amount <= 0) return setError("Please enter a valid bid amount");
 
     try {
-      await placeBid(activeAuctionData.id, selectedBidderTeamId, amount);
+      await placeBid(activeAuctionData.id || activeAuctionData._id, selectedBidderTeamId, amount);
       setBidAmount('');
     } catch (err) {
       setError(err.message);
@@ -63,7 +63,7 @@ export default function Auction() {
       return setError("Please select a team first");
     }
     try {
-      await placeBid(activeAuctionData.id, selectedBidderTeamId, amount);
+      await placeBid(activeAuctionData.id || activeAuctionData._id, selectedBidderTeamId, amount);
     } catch (err) {
       setError(err.message);
     }
@@ -80,7 +80,7 @@ export default function Auction() {
     const actionText = unsold ? "mark this player as UNSOLD" : `sell this player to ${currentBidderTeam?.name} for ${activeAuctionData.currentBid}`;
     if (window.confirm(`Are you sure you want to ${actionText}?`)) {
       try {
-        await completeAuction(activeAuctionData.id, unsold);
+        await completeAuction(activeAuctionData.id || activeAuctionData._id, unsold);
       } catch (err) {
         setError(err.message);
       }
@@ -271,7 +271,7 @@ export default function Auction() {
                           >
                             <option value="">Select Bidding Team...</option>
                             {teams.map(t => (
-                              <option key={t.id} value={t.id} disabled={t.budget < activeAuctionData.currentBid + 10}>
+                              <option key={t.id || t._id} value={t.id || t._id} disabled={t.budget < activeAuctionData.currentBid + 10}>
                                 {t.logo} {t.name} (Budget: {t.budget} Cr)
                               </option>
                             ))}
@@ -364,10 +364,10 @@ export default function Auction() {
         <div className="budgets-sidebar">
           <span className="card-title-sub" style={{ fontSize: '0.8rem' }}>Franchise Budget Tracker</span>
           {teams.map(t => {
-            const rosterCount = players.filter(p => p.teamId === t.id).length;
+            const rosterCount = players.filter(p => (p.teamId === t.id || p.teamId === t._id)).length;
             const pct = Math.round((t.budget / 1000) * 100);
             return (
-              <div key={t.id} className="team-budget-bar">
+              <div key={t.id || t._id} className="team-budget-bar">
                 <div className="flex-between" style={{ fontSize: '0.875rem' }}>
                   <span style={{ fontWeight: '700' }}>{t.logo} {t.name}</span>
                   <span style={{ fontWeight: 'bold', color: 'var(--primary)' }}>{t.budget} Cr</span>
@@ -392,7 +392,7 @@ export default function Auction() {
         {unsoldPlayers.length > 0 ? (
           <div className="pool-grid">
             {unsoldPlayers.map(p => (
-              <div key={p.id} className="pool-card-mini">
+              <div key={p.id || p._id} className="pool-card-mini">
                 <img
                   src={p.photo}
                   alt={p.name}
@@ -405,7 +405,7 @@ export default function Auction() {
                 <div style={{ fontSize: '0.75rem', color: 'var(--primary)' }}>{p.elo} Elo</div>
                 
                 {user && user.role === 'admin' && !activeAuctionData && (
-                  <button className="btn btn-primary" style={{ fontSize: '0.75rem', padding: '0.3rem 0.6rem', width: '100%', marginTop: '0.25rem' }} onClick={() => handleStartAuction(p.id)}>
+                  <button className="btn btn-primary" style={{ fontSize: '0.75rem', padding: '0.3rem 0.6rem', width: '100%', marginTop: '0.25rem' }} onClick={() => handleStartAuction(p.id || p._id)}>
                     <Play size={10} fill="currentColor" /> Put on Block
                   </button>
                 )}

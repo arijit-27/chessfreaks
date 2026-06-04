@@ -292,7 +292,7 @@ export default function Dashboard() {
               <tbody>
                 {teamStandings.length > 0 ? (
                   teamStandings.map((t, idx) => (
-                    <tr key={t.id}>
+                    <tr key={t.id || t._id}>
                       <td style={{ fontWeight: 'bold', width: '40px' }}>#{idx + 1}</td>
                       <td style={{ fontWeight: '600' }}>
                         <span style={{ marginRight: '0.5rem' }}>{t.logo}</span> {t.name}
@@ -329,9 +329,9 @@ export default function Dashboard() {
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             {topMvps.length > 0 ? (
               topMvps.map((p, idx) => {
-                const team = teams.find(t => t.id === p.teamId);
+                const team = teams.find(t => (t.id === p.teamId || t._id === p.teamId));
                 return (
-                  <div key={p.id} className="mvp-item">
+                  <div key={p.id || p._id} className="mvp-item">
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                       <span style={{ fontWeight: '700', color: 'var(--text-secondary)', width: '20px' }}>
                         {idx + 1}

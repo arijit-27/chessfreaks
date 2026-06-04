@@ -259,7 +259,7 @@ export default function LandingPage({ setActiveTab }) {
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             {activeTours.length > 0 ? (
               activeTours.map((t) => (
-                <div key={t.id} className="tour-list-item">
+                <div key={t.id || t._id} className="tour-list-item">
                   <div className="tour-info-main">
                     <span className="tour-name-sub">{t.name}</span>
                     <span className="tour-meta-sub">
@@ -291,7 +291,7 @@ export default function LandingPage({ setActiveTab }) {
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             {topPlayers.length > 0 ? (
               topPlayers.map((p, index) => (
-                <div key={p.id} className="top-player-row">
+                <div key={p.id || p._id} className="top-player-row">
                   <span className="player-rank">#{index + 1}</span>
                   <img
                     src={p.photo}

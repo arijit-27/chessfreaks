@@ -6,11 +6,11 @@ import { useAppContext } from '../context/AppContext';
 export default function PlayerCard({ player, onEdit }) {
   const { user, deletePlayer, teams, playerAchievements } = useAppContext();
   
-  const ach = playerAchievements[player.id] || { gold: 0, silver: 0, bronze: 0, mvps: 0 };
+  const ach = playerAchievements[player.id || player._id] || { gold: 0, silver: 0, bronze: 0, mvps: 0 };
   const totalMVPs = (player.mvps || 0) + (ach.mvps || 0);
   
   // Find player's team name and logo
-  const team = teams.find(t => t.id === player.teamId);
+  const team = teams.find(t => (t.id === player.teamId || t._id === player.teamId));
   const teamName = team ? team.name : "Free Agent";
   const teamLogo = team ? team.logo : "♟";
 
@@ -31,7 +31,7 @@ export default function PlayerCard({ player, onEdit }) {
   const handleDelete = async () => {
     if (window.confirm(`Are you sure you want to remove ${player.name}?`)) {
       try {
-        await deletePlayer(player.id);
+        await deletePlayer(player.id || player._id);
       } catch (err) {
         alert(err.message);
       }

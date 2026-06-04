@@ -33,16 +33,16 @@ export default function Matches() {
   const [editMatchNum, setEditMatchNum] = useState(1);
   const [editDate, setEditDate] = useState('');
 
-  const activeMatch = matches.find(m => m.id === selectedMatchId) || null;
-  const activeTournament = activeMatch ? tournaments.find(t => t.id === activeMatch.tournamentId) : null;
-  const teamA = activeMatch ? teams.find(t => t.id === activeMatch.teamAId) : null;
-  const teamB = activeMatch ? teams.find(t => t.id === activeMatch.teamBId) : null;
+  const activeMatch = matches.find(m => (m.id === selectedMatchId || m._id === selectedMatchId)) || null;
+  const activeTournament = activeMatch ? tournaments.find(t => (t.id === activeMatch.tournamentId || t._id === activeMatch.tournamentId)) : null;
+  const teamA = activeMatch ? teams.find(t => (t.id === activeMatch.teamAId || t._id === activeMatch.teamAId)) : null;
+  const teamB = activeMatch ? teams.find(t => (t.id === activeMatch.teamBId || t._id === activeMatch.teamBId)) : null;
 
-  const rosterA = teamA ? players.filter(p => p.teamId === teamA.id) : [];
-  const rosterB = teamB ? players.filter(p => p.teamId === teamB.id) : [];
+  const rosterA = teamA ? players.filter(p => (p.teamId === teamA.id || p.teamId === teamA._id)) : [];
+  const rosterB = teamB ? players.filter(p => (p.teamId === teamB.id || p.teamId === teamB._id)) : [];
 
   const handleSelectMatch = (m) => {
-    setSelectedMatchId(m.id);
+    setSelectedMatchId(m.id || m._id);
     setEditPlayerA(m.playerAId || '');
     setEditPlayerB(m.playerBId || '');
     setEditTimeControl(m.timeControl || '10+6');
@@ -66,7 +66,7 @@ export default function Matches() {
     setLoadingState(true);
 
     try {
-      await updateMatch(activeMatch.id, {
+      await updateMatch(activeMatch.id || activeMatch._id, {
         playerAId: editPlayerA,
         playerBId: editPlayerB,
         timeControl: editTimeControl,
@@ -82,7 +82,7 @@ export default function Matches() {
       });
       setSuccess("Match details and scores successfully updated!");
       // Reload match details from updated state
-      const updated = matches.find(m => m.id === activeMatch.id);
+      const updated = matches.find(m => (m.id === (activeMatch.id || activeMatch._id) || m._id === (activeMatch.id || activeMatch._id)));
       if (updated) handleSelectMatch(updated);
     } catch (err) {
       setError(err.message);
@@ -94,7 +94,7 @@ export default function Matches() {
   const handleDeleteFixture = async () => {
     if (window.confirm("Are you sure you want to delete this match? Standings and player ratings will not be rolled back automatically, but the fixture will be removed.")) {
       try {
-        await deleteMatch(activeMatch.id);
+        await deleteMatch(activeMatch.id || activeMatch._id);
         setSelectedMatchId(null);
       } catch (err) {
         setError(err.message);
@@ -207,19 +207,19 @@ export default function Matches() {
           <span className="card-title-sub" style={{ fontSize: '0.8rem', display: 'block', marginBottom: '0.5rem' }}>League Matches Directory</span>
           <div className="fixtures-list-scroller">
             {tournaments.map(tour => {
-              const tourFixtures = matches.filter(m => m.tournamentId === tour.id);
+              const tourFixtures = matches.filter(m => (m.tournamentId === tour.id || m.tournamentId === tour._id));
               if (tourFixtures.length === 0) return null;
 
               return (
-                <div key={tour.id} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <div key={tour.id || tour._id} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                   <div className="fixture-group-header">{tour.name}</div>
                   {tourFixtures
                     .sort((a,b) => a.round - b.round || a.matchNumber - b.matchNumber)
                     .map(m => {
-                      const tA = teams.find(t => t.id === m.teamAId);
-                      const tB = teams.find(t => t.id === m.teamBId);
-                      const pA = players.find(p => p.id === m.playerAId);
-                      const pB = players.find(p => p.id === m.playerBId);
+                      const tA = teams.find(t => (t.id === m.teamAId || t._id === m.teamAId));
+                      const tB = teams.find(t => (t.id === m.teamBId || t._id === m.teamBId));
+                      const pA = players.find(p => (p.id === m.playerAId || p._id === m.playerAId));
+                      const pB = players.find(p => (p.id === m.playerBId || p._id === m.playerBId));
 
                       let resultStatus = "Scheduled";
                       if (m.isCompleted) {
@@ -236,8 +236,8 @@ export default function Matches() {
 
                       return (
                         <div
-                          key={m.id}
-                          className={`fixture-card-selector ${selectedMatchId === m.id ? 'active' : ''}`}
+                          key={m.id || m._id}
+                          className={`fixture-card-selector ${selectedMatchId === (m.id || m._id) ? 'active' : ''}`}
                           onClick={() => handleSelectMatch(m)}
                         >
                           <div className="flex-between" style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
@@ -312,12 +312,12 @@ export default function Matches() {
                       {user?.role === 'admin' && !activeMatch.isCompleted ? (
                         <select className="form-select mt-1" value={editPlayerA} onChange={(e) => setEditPlayerA(e.target.value)}>
                           {rosterA.map(p => (
-                            <option key={p.id} value={p.id}>{p.name} ({p.elo})</option>
+                            <option key={p.id || p._id} value={p.id || p._id}>{p.name} ({p.elo})</option>
                           ))}
                         </select>
                       ) : (
                         <span style={{ fontWeight: 'bold', marginTop: '0.25rem' }}>
-                          {players.find(p => p.id === activeMatch.playerAId)?.name || 'N/A'}
+                          {players.find(p => (p.id === activeMatch.playerAId || p._id === activeMatch.playerAId))?.name || 'N/A'}
                         </span>
                       )}
                     </div>
@@ -330,12 +330,12 @@ export default function Matches() {
                       {user?.role === 'admin' && !activeMatch.isCompleted ? (
                         <select className="form-select mt-1" value={editPlayerB} onChange={(e) => setEditPlayerB(e.target.value)}>
                           {rosterB.map(p => (
-                            <option key={p.id} value={p.id}>{p.name} ({p.elo})</option>
+                            <option key={p.id || p._id} value={p.id || p._id}>{p.name} ({p.elo})</option>
                           ))}
                         </select>
                       ) : (
                         <span style={{ fontWeight: 'bold', marginTop: '0.25rem' }}>
-                          {players.find(p => p.id === activeMatch.playerBId)?.name || 'N/A'}
+                          {players.find(p => (p.id === activeMatch.playerBId || p._id === activeMatch.playerBId))?.name || 'N/A'}
                         </span>
                       )}
                     </div>
@@ -406,8 +406,8 @@ export default function Matches() {
                     {user?.role === 'admin' && !activeMatch.isCompleted ? (
                       <select className="form-select" value={editGame1} onChange={(e) => setEditGame1(e.target.value)}>
                         <option value="">Pending...</option>
-                        <option value="playerA">Winner: Player A ({players.find(p => p.id === editPlayerA)?.name})</option>
-                        <option value="playerB">Winner: Player B ({players.find(p => p.id === editPlayerB)?.name})</option>
+                        <option value="playerA">Winner: Player A ({players.find(p => (p.id === editPlayerA || p._id === editPlayerA))?.name})</option>
+                        <option value="playerB">Winner: Player B ({players.find(p => (p.id === editPlayerB || p._id === editPlayerB))?.name})</option>
                         <option value="draw">Draw</option>
                         <option value="NP">NP (Not Played)</option>
                       </select>
@@ -423,8 +423,8 @@ export default function Matches() {
                     {user?.role === 'admin' && !activeMatch.isCompleted ? (
                       <select className="form-select" value={editGame2} onChange={(e) => setEditGame2(e.target.value)}>
                         <option value="">Pending...</option>
-                        <option value="playerA">Winner: Player A ({players.find(p => p.id === editPlayerA)?.name})</option>
-                        <option value="playerB">Winner: Player B ({players.find(p => p.id === editPlayerB)?.name})</option>
+                        <option value="playerA">Winner: Player A ({players.find(p => (p.id === editPlayerA || p._id === editPlayerA))?.name})</option>
+                        <option value="playerB">Winner: Player B ({players.find(p => (p.id === editPlayerB || p._id === editPlayerB))?.name})</option>
                         <option value="draw">Draw</option>
                         <option value="NP">NP (Not Played)</option>
                       </select>
@@ -468,10 +468,10 @@ export default function Matches() {
                     <Calendar size={14} style={{ color: 'var(--text-secondary)' }} /> Completed Date: <strong>{activeMatch.date}</strong>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem' }}>
-                    <User size={14} style={{ color: 'var(--text-secondary)' }} /> Player A Rating: <strong>{players.find(p => p.id === activeMatch.playerAId)?.elo} Elo</strong>
+                    <User size={14} style={{ color: 'var(--text-secondary)' }} /> Player A Rating: <strong>{players.find(p => (p.id === activeMatch.playerAId || p._id === activeMatch.playerAId))?.elo} Elo</strong>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem' }}>
-                    <User size={14} style={{ color: 'var(--text-secondary)' }} /> Player B Rating: <strong>{players.find(p => p.id === activeMatch.playerBId)?.elo} Elo</strong>
+                    <User size={14} style={{ color: 'var(--text-secondary)' }} /> Player B Rating: <strong>{players.find(p => (p.id === activeMatch.playerBId || p._id === activeMatch.playerBId))?.elo} Elo</strong>
                   </div>
                 </div>
               )}
