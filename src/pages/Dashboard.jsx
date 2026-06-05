@@ -5,7 +5,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 
 import { useAppContext } from '../context/AppContext';
 
 export default function Dashboard() {
-  const { players, teams, matches, tournaments, refreshData } = useAppContext();
+  const { players, teams, matches, tournaments, playerAchievements, refreshData } = useAppContext();
 
   useEffect(() => {
     if (refreshData) {
@@ -134,8 +134,17 @@ export default function Dashboard() {
 
   // 4. Data for MVP Leaderboard
   const topMvps = [...players]
-    .filter(p => p.mvps > 0)
-    .sort((a, b) => b.mvps - a.mvps)
+    .map(p => {
+      const pId = p.id || p._id;
+      const ach = playerAchievements && playerAchievements[pId] ? playerAchievements[pId] : { mvps: 0 };
+      const totalMvps = (p.mvps || 0) + (ach.mvps || 0);
+      return {
+        ...p,
+        totalMvps
+      };
+    })
+    .filter(p => p.totalMvps > 0)
+    .sort((a, b) => b.totalMvps - a.totalMvps)
     .slice(0, 5);
 
   const colors = ['#d4af37', '#10b981', '#3b82f6', '#f59e0b', '#f43f5e'];
@@ -559,7 +568,7 @@ export default function Dashboard() {
                     </div>
                     <div className="text-right" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                       <Award size={16} className="text-emerald" />
-                      <span style={{ fontWeight: '700' }}>{p.mvps}</span>
+                      <span style={{ fontWeight: '700' }}>{p.totalMvps}</span>
                     </div>
                   </div>
                 );
