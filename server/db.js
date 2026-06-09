@@ -103,45 +103,43 @@ const Tournament = mongoose.model('Tournament', TournamentSchema);
 const Match = mongoose.model('Match', MatchSchema);
 const Auction = mongoose.model('Auction', AuctionSchema);
 
-// --- SEED DATABASE ---
+// --- SEED DATABASE (FIXED) ---
 async function seedDB() {
+  console.log("Checking database collection states...");
+
+  // 1. Seed Users
   const usersCount = await User.countDocuments();
-  if (usersCount > 0) {
-    return;
+  if (usersCount === 0) {
+    console.log("- Seeding default user accounts...");
+    await User.insertMany(initialUsers);
   }
 
-  console.log("Database is empty. Seeding default user accounts...");
+  // 2. Seed Teams
+  const teamsCount = await Team.countDocuments();
+  if (teamsCount === 0 && initialTeams && initialTeams.length > 0) {
+    console.log("- Seeding initial franchise teams...");
+    await Team.insertMany(initialTeams);
+  }
 
-  // Seed Users
-  await User.insertMany(initialUsers);
-  console.log("- Default Admin/Viewer accounts seeded successfully.");
+  // 3. Seed Players
+  const playersCount = await Player.countDocuments();
+  if (playersCount === 0 && initialPlayers && initialPlayers.length > 0) {
+    console.log("- Seeding master player pool profiles...");
+    await Player.insertMany(initialPlayers);
+  }
+
+  // 4. Seed Tournaments
+  const tournamentsCount = await Tournament.countDocuments();
+  if (tournamentsCount === 0 && initialTournaments && initialTournaments.length > 0) {
+    console.log("- Seeding default league tournament records...");
+    await Tournament.insertMany(initialTournaments);
+  }
+
+  console.log("All data synchronization audits completed safely.");
 }
 
 // --- DATABASE CONNECTION CONTROL ---
-/*async function connectDB() {
-  const uri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/chess-freaks';
-  console.log("Connecting to MongoDB at:", uri);
-  await mongoose.connect(uri);
-  console.log("MongoDB connection successful.");
-  await seedDB();
-}
-// Inside server/db.js
 async function connectDB() {
-  // We change the port numbers to 443 to bypass local ISP blocks
-  const uri = "mongodb://dhritimanmandalddm_db_user:chess_freaks@cluster0-shard-00-00.fmclf4a.mongodb.net:443,cluster0-shard-00-01.fmclf4a.mongodb.net:443,cluster0-shard-00-02.fmclf4a.mongodb.net:443/chess-freaks?ssl=true&replicaSet=atlas-9wz3m3-shard-0&authSource=admin&retryWrites=true&w=majority";
-
-  console.log("Connecting to MongoDB via Port 443 standard URI...");
-  
-  await mongoose.connect(uri, {
-    serverSelectionTimeoutMS: 5000 
-  });
-  
-  console.log("MongoDB connection successful.");
-  await seedDB();
-}*/
-// --- DATABASE CONNECTION CONTROL ---
-async function connectDB() {
-  // Use the environment variable injected by Render, or a clean fallback string
   const uri = process.env.MONGODB_URI || "mongodb+srv://dhritimanmandalddm_db_user:chess_freaks@cluster0.fmclf4a.mongodb.net/chess-freaks?retryWrites=true&w=majority";
 
   console.log("Connecting to MongoDB Database...");
@@ -152,7 +150,6 @@ async function connectDB() {
   
   console.log("MongoDB connection successful.");
   
-  // --- FORCE SEEDING LOGIC ---
   console.log("CRITICAL: Running database seed function to populate collections...");
   try {
     await seedDB();
@@ -165,6 +162,7 @@ async function connectDB() {
 // --- DB CLIENT WRAPPER INTERFACE (Asynchronous) ---
 const dbClient = {
   connectDB,
+  seedDB, // Exposed helper for manual routes if ever called
   
   // Users
   users: {
@@ -192,7 +190,6 @@ const dbClient = {
     },
     delete: async (id) => {
       await Team.findByIdAndDelete(id);
-      // Remove team references from players & update status
       await Player.updateMany({ teamId: id }, { teamId: null, status: 'UNSOLD', auctionValue: 0 });
       return true;
     }
@@ -208,7 +205,6 @@ const dbClient = {
       return p;
     },
     update: async (id, updates) => {
-      // Calculate matches and win percentage automatically on updates
       if (updates.wins !== undefined || updates.losses !== undefined || updates.draws !== undefined) {
         const p = await Player.findById(id);
         if (p) {
@@ -242,7 +238,6 @@ const dbClient = {
     },
     delete: async (id) => {
       await Tournament.findByIdAndDelete(id);
-      // Cascade delete match fixtures under this tournament
       await Match.deleteMany({ tournamentId: id });
       return true;
     }
@@ -292,7 +287,6 @@ const dbClient = {
     getAll: () => Auction.find({}),
     getById: (id) => Auction.findById(id),
     start: async (playerId) => {
-      // Pause any active auction
       await Auction.updateMany({ status: 'IN_PROGRESS' }, { status: 'PAUSED' });
       
       const p = await Player.findById(playerId);
