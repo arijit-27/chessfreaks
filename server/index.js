@@ -15,7 +15,29 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-// Mount API routes
+// ========================================================
+// 🛠️ TEMPORARY MANUAL BACKDOOR SEED ROUTE
+// ========================================================
+app.get('/api/force-seed-database-xyz', async (req, res) => {
+  try {
+    console.log("========================================");
+    console.log("MANUAL TRIGGER: Forcing database seed...");
+    console.log("========================================");
+    
+    // Calls connectDB again which inherently runs the fresh seed function
+    await db.connectDB(); 
+    
+    return res.status(200).json({ 
+      success: true, 
+      message: "Database seed function forced successfully! Check Render logs to see inserted records." 
+    });
+  } catch (error) {
+    console.error("Manual seed route crashed:", error);
+    return res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Mount standard API routes
 app.use('/api', apiRoutes);
 
 // Serve static assets in production
@@ -71,8 +93,6 @@ async function startServer() {
     console.log("MongoDB Connected Successfully!");
   } catch (e) {
     console.error("CRITICAL: Failed to connect to MongoDB in background.", e);
-    // Optional: Leave this out if you want the server to stay alive even if DB drops
-    // process.exit(1); 
   }
 }
 
