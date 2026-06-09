@@ -151,7 +151,15 @@ async function connectDB() {
   });
   
   console.log("MongoDB connection successful.");
-  await seedDB();
+  
+  // --- FORCE SEEDING LOGIC ---
+  console.log("CRITICAL: Running database seed function to populate collections...");
+  try {
+    await seedDB();
+    console.log("Database seeding completed successfully!");
+  } catch (seedError) {
+    console.error("WARNING: Seeding function encountered an error:", seedError);
+  }
 }
 
 // --- DB CLIENT WRAPPER INTERFACE (Asynchronous) ---
