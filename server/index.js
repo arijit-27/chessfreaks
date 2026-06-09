@@ -56,17 +56,23 @@ socketManager.initSocket(server);
 
 // Start listening after database connection is active
 async function startServer() {
+  // 1. Start listening on the port immediately so Vite can connect
+  server.listen(PORT, '0.0.0.0', () => {
+    console.log(`========================================`);
+    console.log(`   Chess Freaks Server running on PORT: ${PORT}`);
+    console.log(`   WebSockets attached path: /ws`);
+    console.log(`========================================`);
+  });
+
+  // 2. Connect to the database asynchronously in the background
   try {
+    console.log("Attempting background database connection...");
     await db.connectDB();
-    server.listen(PORT, () => {
-      console.log(`========================================`);
-      console.log(`   Chess Freaks Server running on PORT: ${PORT}`);
-      console.log(`   WebSockets attached path: /ws`);
-      console.log(`========================================`);
-    });
+    console.log("MongoDB Connected Successfully!");
   } catch (e) {
-    console.error("CRITICAL: Failed to connect to MongoDB. Server not started.", e);
-    process.exit(1);
+    console.error("CRITICAL: Failed to connect to MongoDB in background.", e);
+    // Optional: Leave this out if you want the server to stay alive even if DB drops
+    // process.exit(1); 
   }
 }
 

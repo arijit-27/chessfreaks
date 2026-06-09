@@ -118,10 +118,38 @@ async function seedDB() {
 }
 
 // --- DATABASE CONNECTION CONTROL ---
-async function connectDB() {
+/*async function connectDB() {
   const uri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/chess-freaks';
   console.log("Connecting to MongoDB at:", uri);
   await mongoose.connect(uri);
+  console.log("MongoDB connection successful.");
+  await seedDB();
+}
+// Inside server/db.js
+async function connectDB() {
+  // We change the port numbers to 443 to bypass local ISP blocks
+  const uri = "mongodb://dhritimanmandalddm_db_user:chess_freaks@cluster0-shard-00-00.fmclf4a.mongodb.net:443,cluster0-shard-00-01.fmclf4a.mongodb.net:443,cluster0-shard-00-02.fmclf4a.mongodb.net:443/chess-freaks?ssl=true&replicaSet=atlas-9wz3m3-shard-0&authSource=admin&retryWrites=true&w=majority";
+
+  console.log("Connecting to MongoDB via Port 443 standard URI...");
+  
+  await mongoose.connect(uri, {
+    serverSelectionTimeoutMS: 5000 
+  });
+  
+  console.log("MongoDB connection successful.");
+  await seedDB();
+}*/
+// --- DATABASE CONNECTION CONTROL ---
+async function connectDB() {
+  // Use the environment variable injected by Render, or a clean fallback string
+  const uri = process.env.MONGODB_URI || "mongodb+srv://dhritimanmandalddm_db_user:chess_freaks@cluster0.fmclf4a.mongodb.net/chess-freaks?retryWrites=true&w=majority";
+
+  console.log("Connecting to MongoDB Database...");
+  
+  await mongoose.connect(uri, {
+    serverSelectionTimeoutMS: 10000
+  });
+  
   console.log("MongoDB connection successful.");
   await seedDB();
 }
